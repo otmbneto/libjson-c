@@ -22,7 +22,7 @@ typedef struct TOKEN{
 
 }TOKEN;
 
-TOKEN* create_token(char value,int token_length,TOKEN_TYPE type);
+TOKEN* create_token(char* value,int token_length,TOKEN_TYPE type);
 void tokenize(char* filepath);
 
 #endif // TOKEN_H_INCLUDED
