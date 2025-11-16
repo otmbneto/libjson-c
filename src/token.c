@@ -3,7 +3,6 @@
 #include <string.h>
 #include "../include/token.h"
 
-
 TOKEN_TYPE check_token_type(char* string,int str_len){
 
     int has_dot = 0;
@@ -103,16 +102,44 @@ TOKEN* create_token(char* value,int token_length,TOKEN_TYPE type){
     return new_token;
 }
 
+int expand_token(TOKEN*** tokens,int new_length){
+
+    TOKEN** new_list = NULL;
+    int status = 1;
+    new_list = realloc(*tokens,sizeof(TOKEN*)*new_length);
+    if(new_list == NULL){
+        printf("ERROR:realloc failed\n");
+        status = 0;
+    }
+    *tokens = new_list;
+    return status;
+}
+
+char* create_string(int length){
+    return malloc(sizeof(char)*(length + 1));
+}
+
+int expand_string(char** string,int new_length){
+
+    char* new_str = NULL;
+    int status = 1;
+    new_str = realloc(*string,sizeof(char)*(new_length + 1));
+    if(new_str == NULL){
+        printf("ERROR: realloc failed\n");
+        status = 0;
+    }
+    *string = new_str;
+    return status;
+}
+
 //TODO: try to use regex instead of ifs
 TOKEN** tokenize(char* filepath){
 
-    char* string = NULL;
     int str_def_len = 10;
-    string = malloc(sizeof(char)*(str_def_len + 1));
+    char* string = create_string(str_def_len);
     int str_counter = 0;
     int i = 0;
     int token_count = 10;
-    int spc_started = 0;
     TOKEN** tokens = malloc(sizeof(TOKEN*)*token_count);
     TOKEN** new_list = NULL;
     FILE* file_pointer = fopen(filepath, "r");
@@ -124,23 +151,14 @@ TOKEN** tokenize(char* filepath){
     TOKEN_TYPE t_temp = UNKNOWN;
     while ((*c = fgetc(file_pointer)) != EOF) {
         if(i >= token_count){
+            printf("Token list is too big.reallocating memory\n");
             token_count *= 2;
-            new_list = realloc(tokens,sizeof(TOKEN*)*token_count);
-            if(new_list == NULL){
-                return NULL;
-            }
-            tokens = new_list;
+            expand_token(&tokens,token_count);
         }
-
         if(str_counter >= str_def_len){
             printf("string is too big.reallocating memory\n");
             str_def_len *= 2;
-            char* new_str = realloc(string,sizeof(char)*(str_def_len + 1));
-            if(new_str == NULL){
-                printf("realloc failed\n");
-                return NULL;
-            }
-            string = new_str;
+            expand_string(&string,str_def_len);
         }
         TOKEN_TYPE t_type = UNKNOWN;
         switch(*c){
@@ -261,8 +279,7 @@ TOKEN** tokenize(char* filepath){
             }
         }
     }
-
-    //debug
+    tokens[i++] = create_token(c,1,END);
     for(int j = 0;j< i; j++){
 
         printf("token %i: %s\n",j+1,tokens[j]->value);
