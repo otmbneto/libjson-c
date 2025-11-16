@@ -12,7 +12,8 @@ typedef enum TOKEN_TYPE{
     NONE,
     NUMBER,
     STRING,
-    END
+    END,
+    UNKNOWN
 }TOKEN_TYPE;
 
 typedef struct TOKEN{
@@ -22,7 +23,8 @@ typedef struct TOKEN{
 
 }TOKEN;
 
+TOKEN_TYPE check_token_type(char* string,int str_len);
 TOKEN* create_token(char* value,int token_length,TOKEN_TYPE type);
-void tokenize(char* filepath);
+TOKEN** tokenize(char* filepath);
 
 #endif // TOKEN_H_INCLUDED

@@ -3,8 +3,89 @@
 #include <string.h>
 #include "../include/token.h"
 
-TOKEN* create_token(char* value,int token_length,TOKEN_TYPE type){
 
+TOKEN_TYPE check_token_type(char* string,int str_len){
+
+    int has_dot = 0;
+    int sci_not = 0;
+    int is_number = 1;
+    TOKEN_TYPE t_type = UNKNOWN;
+    if(strcmp("true", string) == 0){
+        t_type = TRUE;
+        is_number = 0;
+    }
+    else if(strcmp("false", string) == 0){
+        t_type = FALSE;
+        is_number = 0;
+    }
+    else if(strcmp("null", string) == 0){
+        t_type = NONE;
+        is_number = 0;
+    }
+    else if(str_len > 1 && string[0] == '"' && string[str_len - 1] == '"' && string[str_len - 2] != '\\'){
+        t_type = STRING;
+        is_number = 0;
+    }
+    else{
+        int i = 0;
+        while(i < str_len && is_number){
+            switch(string[i]){
+                case 'e':{
+                            if(sci_not){
+                                is_number = 0;
+                                break;
+                            }
+                            sci_not = 1;
+                         }
+                         break;
+                case '+':{
+                            if(!sci_not){
+                                is_number = 0;
+                                break;
+                            }
+                         }
+                case '-':{
+                            if(i>0 && !sci_not){
+                                is_number = 0;
+                            }
+                            else{
+                                sci_not = 0;
+                            }
+                         }
+                         break;
+                case '.': {
+                            if(has_dot || i == 0){
+                                is_number = 0;
+                                break;
+                            }
+                            has_dot = 1;
+                          }
+                          break;
+                case '0':
+                case '1':
+                case '2':
+                case '3':
+                case '4':
+                case '5':
+                case '6':
+                case '7':
+                case '8':
+                case '9': break;
+                default:{
+                        is_number = 0;
+                        break;
+                }
+            }
+            i++;
+        }
+        if(is_number){
+            t_type = NUMBER;
+        }
+    }
+    return t_type;
+}
+
+TOKEN* create_token(char* value,int token_length,TOKEN_TYPE type){
     TOKEN* new_token = malloc(sizeof(TOKEN));
     if(new_token != NULL){
         new_token->value = malloc(sizeof(char)*(token_length+1));
@@ -18,10 +99,12 @@ TOKEN* create_token(char* value,int token_length,TOKEN_TYPE type){
             new_token->type = type;
         }
     }
+
     return new_token;
 }
 
-void tokenize(char* filepath){
+//TODO: try to use regex instead of ifs
+TOKEN** tokenize(char* filepath){
 
     char* string = NULL;
     int str_def_len = 10;
@@ -29,65 +112,79 @@ void tokenize(char* filepath){
     int str_counter = 0;
     int i = 0;
     int token_count = 10;
-    int str_started = 0;
     int spc_started = 0;
     TOKEN** tokens = malloc(sizeof(TOKEN*)*token_count);
     TOKEN** new_list = NULL;
     FILE* file_pointer = fopen(filepath, "r");
     if(file_pointer == NULL){
         printf("ERROR: could not open file\n");
-        return;
+        return NULL;
     }
     char* c = malloc(sizeof(char) + 1);
+    TOKEN_TYPE t_temp = UNKNOWN;
     while ((*c = fgetc(file_pointer)) != EOF) {
-
         if(i >= token_count){
             token_count *= 2;
             new_list = realloc(tokens,sizeof(TOKEN*)*token_count);
             if(new_list == NULL){
-                return;
+                return NULL;
             }
             tokens = new_list;
         }
+
+        if(str_counter >= str_def_len){
+            printf("string is too big.reallocating memory\n");
+            str_def_len *= 2;
+            char* new_str = realloc(string,sizeof(char)*(str_def_len + 1));
+            if(new_str == NULL){
+                printf("realloc failed\n");
+                return NULL;
+            }
+            string = new_str;
+        }
+        TOKEN_TYPE t_type = UNKNOWN;
         switch(*c){
 
-            case '{':   tokens[i++] = create_token(c,1,R_BRACE);
-                        break;
-            case '}':   tokens[i++] = create_token(c,1,L_BRACE);
-                        break;
-            case '[':   tokens[i++] = create_token(c,1,R_BRACKET);
-                        break;
-            case ']':   tokens[i++] = create_token(c,1,L_BRACKET);
-                        break;
-            case ',':   tokens[i++] = create_token(c,1,COMMA);
-                        break;
-            case ':':   tokens[i++] = create_token(c,1,COLON);
-                        break;
+            case '{':
+                tokens[i++] = create_token("{", 1, R_BRACE);
+                break;
+
+            case '}':
+                tokens[i++] = create_token("}", 1, L_BRACE);
+                break;
+
+            case '[':
+                tokens[i++] = create_token("[", 1, R_BRACKET);
+                break;
+
+            case ']':
+                tokens[i++] = create_token("]", 1, L_BRACKET);
+                break;
+
+            case ':':
+                tokens[i++] = create_token(":", 1, COLON);
+                break;
+
+            case ',':
+                tokens[i++] = create_token(",", 1, COMMA);
+                break;
             case '"':{
-                        if(str_counter >= str_def_len){
-                            printf("string is too big.reallocating memory\n");
-                            str_def_len *= 2;
-                            char* new_str = realloc(string,sizeof(char)*(str_def_len + 1));
-                            if(new_str == NULL){
-                                printf("realloc failed\n");
-                                return;
-                            }
-                            string = new_str;
-                        }
-                        string[str_counter++] = *c;
-                        string[str_counter] = '\0';
-                        if(!str_started && !spc_started){
-                            //started a string
-                            str_started = 1;
-                        }
-                        else if(str_started && !spc_started){
-                            //close string
-                            tokens[i++] = create_token(string,str_counter,STRING);
-                            str_started = 0;
+                        if(t_temp == NUMBER){
+                            tokens[i++] = create_token(string,str_counter,NUMBER);
                             str_counter = 0;
+                            t_temp = UNKNOWN;
                         }
                      }
-                     break;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
             case 'a':
             case 'b':
             case 'c':
@@ -139,31 +236,29 @@ void tokenize(char* filepath){
             case 'W':
             case 'X':
             case 'Y':
-            case 'Z': {
+            case 'Z':{
+
                         string[str_counter++] = *c;
                         string[str_counter] = '\0';
-                        // if is not in the middle of the a string
-                        if(!str_started){
-
-                            if(strcmp("true", string) == 0){
-                                tokens[i++] = create_token(string,str_counter,TRUE);
-                                str_started = 0;
-                                str_counter = 0;
-                            }
-                            else if(strcmp("false", string) == 0){
-                                tokens[i++] = create_token(string,str_counter,FALSE);
-                                str_started = 0;
-                                str_counter = 0;
-                            }
-                            else if(strcmp("null", string) == 0){
-                                tokens[i++] = create_token(string,str_counter,FALSE);
-                                str_started = 0;
-                                str_counter = 0;
-                            }
-
+                        t_type = check_token_type(string,str_counter);
+                        if(t_type == NUMBER){
+                            t_temp = NUMBER;
                         }
-                      }
-                      break;
+                        else if(t_type != UNKNOWN){
+                            tokens[i++] = create_token(string,str_counter,t_type);
+                            str_counter = 0;
+                        }
+
+                    }
+                    break;
+            default:{
+                    //we are currently in the middle of string
+                    if(str_counter > 0 && string[0] == '"'){
+                        string[str_counter++] = *c;
+                        string[str_counter] = '\0';
+
+                    }
+            }
         }
     }
 
@@ -173,4 +268,6 @@ void tokenize(char* filepath){
         printf("token %i: %s\n",j+1,tokens[j]->value);
 
     }
+
+    return tokens;
 }
