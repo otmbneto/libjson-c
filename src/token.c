@@ -142,6 +142,7 @@ TOKEN** tokenize(char* filepath){
     int i = 0;
     int token_count = 10;
     int number_index = -1; //stores temporarely the index where a number token should be stored.
+    char unique_char = ' ';
     TOKEN** tokens = malloc(sizeof(TOKEN*)*token_count);
     FILE* file_pointer = fopen(filepath, "r");
     if(file_pointer == NULL){
@@ -160,6 +161,10 @@ TOKEN** tokenize(char* filepath){
             printf("string is too big.reallocating memory\n");
             str_def_len *= 2;
             expand_string(&string,str_def_len);
+        }
+        if(str_counter > 0 && string[0] == '"'){
+            unique_char = *c;
+            *c = ' ';
         }
         TOKEN_TYPE t_type = UNKNOWN;
         switch(*c){
@@ -194,6 +199,10 @@ TOKEN** tokenize(char* filepath){
                      }
             default:{
 
+                if(unique_char != ' '){
+                    *c = unique_char;
+                    unique_char = ' ';
+                }
                 if(t_temp == NUMBER && check_token_type(c,1) != NUMBER){
                     tokens[number_index] = create_token(string,str_counter,NUMBER);
                     number_index = -1;
