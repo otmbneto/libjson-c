@@ -21,7 +21,7 @@ TOKEN_TYPE check_token_type(char* string,int str_len){
         t_type = NONE;
         is_number = 0;
     }
-    else if(str_len > 1 && string[0] == '"' && string[str_len - 1] == '"' && string[str_len - 2] != '\\'){
+    else if(str_len > 1 && string[0] == '"' && string[str_len - 2] != '\\' && string[str_len - 1] == '"'){
         t_type = STRING;
         is_number = 0;
     }
@@ -215,11 +215,13 @@ TOKEN** tokenize(char* filepath){
         }
     }
     tokens[i++] = create_token(c,1,END);
+
     for(int j = 0;j< i; j++){
 
         printf("token %i: %s\n",j+1,tokens[j]->value);
 
     }
+
 
     return tokens;
 }
