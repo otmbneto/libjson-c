@@ -141,6 +141,7 @@ TOKEN** tokenize(char* filepath){
     int str_counter = 0;
     int i = 0;
     int token_count = 10;
+    int number_index = -1; //stores temporarely the index where a number token should be stored.
     TOKEN** tokens = malloc(sizeof(TOKEN*)*token_count);
     FILE* file_pointer = fopen(filepath, "r");
     if(file_pointer == NULL){
@@ -193,9 +194,9 @@ TOKEN** tokenize(char* filepath){
                      }
             default:{
 
-                //TODO: check comman and others cases
                 if(t_temp == NUMBER && check_token_type(c,1) != NUMBER){
-                    tokens[i++] = create_token(string,str_counter,NUMBER);
+                    tokens[number_index] = create_token(string,str_counter,NUMBER);
+                    number_index = -1;
                     str_counter = 0;
                     t_temp = UNKNOWN;
                 }
@@ -204,6 +205,10 @@ TOKEN** tokenize(char* filepath){
                 t_type = check_token_type(string,str_counter);
                 if(t_type == NUMBER){
                     t_temp = NUMBER;
+                    if(number_index < 0){
+                        number_index = i;
+                        i++;
+                    }
                 }
                 else if(t_type != UNKNOWN){
                     tokens[i++] = create_token(string,str_counter,t_type);
