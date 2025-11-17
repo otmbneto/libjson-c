@@ -9,7 +9,6 @@ int is_number(char* string,int length){
     int is_number = 1;
     int sci_not = 0; //scientific notation started flag
     int has_dot = 0; // flag for when we're into the fractional part of a float.
-    printf("is number %s\n",string);
     while(i < length && is_number){
         switch(string[i]){
             case 'E':
@@ -77,8 +76,12 @@ TOKEN_TYPE check_token_type(char* string,int str_len){
     else if(strcmp("null", string) == 0){
         t_type = NONE;
     }
-    else if(str_len > 1 && string[0] == '"' && string[str_len - 2] != '\\' && string[str_len - 1] == '"'){
-        t_type = STRING;
+    //if it is shaped as a string token
+    else if(str_len > 1 && string[0] == '"' && string[str_len - 1] == '"'){
+        //if the string token does not have inverse bar before the las double quote.
+        if(string[str_len - 2] != '\\' || (str_len > 2 && string[str_len - 2] == '\\' && string[str_len - 3] == '\\')){
+            t_type = STRING;
+        }
     }
     else if(is_number(string,str_len)){
         t_type = NUMBER;
@@ -200,6 +203,8 @@ TOKEN** tokenize(char* filepath,int* t_count){
             case ',':
                 tokens[i++] = create_token(",", 1, COMMA);
                 break;
+            case '\f':
+            case '\b':
             case '\t':
             case '\r':
             case '\n':
@@ -210,6 +215,7 @@ TOKEN** tokenize(char* filepath,int* t_count){
                         }
                      }
             default:{
+
                 if(unique_char != ' '){
                     *c = unique_char;
                     unique_char = ' ';
