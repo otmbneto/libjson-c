@@ -3,87 +3,85 @@
 #include <string.h>
 #include "../include/token.h"
 
+int is_number(char* string,int length){
+
+    int i = 0;
+    int is_number = 1;
+    int sci_not = 0; //scientific notation started flag
+    int has_dot = 0; // flag for when we're into the fractional part of a float.
+    while(i < length && is_number){
+        switch(string[i]){
+            case 'e':{
+                        if(sci_not){
+                            is_number = 0;
+                            break;
+                        }
+                        sci_not = 1;
+                     }
+                     break;
+            case '+':{
+                        if(!sci_not){
+                            is_number = 0;
+                            break;
+                        }
+                     }
+            case '-':{
+                        if(i>0 && !sci_not){
+                            is_number = 0;
+                        }
+                        else{
+                            sci_not = 0;
+                        }
+                     }
+                     break;
+            case '.': {
+                        if(has_dot || i == 0){
+                            is_number = 0;
+                            break;
+                        }
+                        has_dot = 1;
+                      }
+                      break;
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9': break;
+            default:{
+                    is_number = 0;
+                    break;
+            }
+        }
+        i++;
+    }
+
+    return is_number;
+}
+
 TOKEN_TYPE check_token_type(char* string,int str_len){
 
-    int has_dot = 0;
-    int sci_not = 0;
-    int is_number = 1;
     TOKEN_TYPE t_type = UNKNOWN;
     if(strcmp("true", string) == 0){
         t_type = TRUE;
-        is_number = 0;
     }
     else if(strcmp("false", string) == 0){
         t_type = FALSE;
-        is_number = 0;
     }
     else if(strcmp("null", string) == 0){
         t_type = NONE;
-        is_number = 0;
     }
     else if(str_len > 1 && string[0] == '"' && string[str_len - 2] != '\\' && string[str_len - 1] == '"'){
         t_type = STRING;
-        is_number = 0;
     }
-    else{
-        int i = 0;
-        while(i < str_len && is_number){
-            switch(string[i]){
-                case 'e':{
-                            if(sci_not){
-                                is_number = 0;
-                                break;
-                            }
-                            sci_not = 1;
-                         }
-                         break;
-                case '+':{
-                            if(!sci_not){
-                                is_number = 0;
-                                break;
-                            }
-                         }
-                case '-':{
-                            if(i>0 && !sci_not){
-                                is_number = 0;
-                            }
-                            else{
-                                sci_not = 0;
-                            }
-                         }
-                         break;
-                case '.': {
-                            if(has_dot || i == 0){
-                                is_number = 0;
-                                break;
-                            }
-                            has_dot = 1;
-                          }
-                          break;
-                case '0':
-                case '1':
-                case '2':
-                case '3':
-                case '4':
-                case '5':
-                case '6':
-                case '7':
-                case '8':
-                case '9': break;
-                default:{
-                        is_number = 0;
-                        break;
-                }
-            }
-            i++;
-        }
-        if(is_number){
-            t_type = NUMBER;
-        }
+    else if(is_number(string,str_len)){
+        t_type = NUMBER;
     }
 
-    if(t_type == UNKNOWN){
-    }
     return t_type;
 }
 
