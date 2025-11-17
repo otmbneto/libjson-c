@@ -81,6 +81,9 @@ TOKEN_TYPE check_token_type(char* string,int str_len){
             t_type = NUMBER;
         }
     }
+
+    if(t_type == UNKNOWN){
+    }
     return t_type;
 }
 
@@ -141,7 +144,6 @@ TOKEN** tokenize(char* filepath){
     int i = 0;
     int token_count = 10;
     TOKEN** tokens = malloc(sizeof(TOKEN*)*token_count);
-    TOKEN** new_list = NULL;
     FILE* file_pointer = fopen(filepath, "r");
     if(file_pointer == NULL){
         printf("ERROR: could not open file\n");
@@ -186,96 +188,29 @@ TOKEN** tokenize(char* filepath){
             case ',':
                 tokens[i++] = create_token(",", 1, COMMA);
                 break;
-            case '"':{
-                        if(t_temp == NUMBER){
-                            tokens[i++] = create_token(string,str_counter,NUMBER);
-                            str_counter = 0;
-                            t_temp = UNKNOWN;
+            case ' ':{
+                        if(!(str_counter > 0 && string[0] == '"')){
+                            break;
                         }
                      }
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
-            case 'a':
-            case 'b':
-            case 'c':
-            case 'd':
-            case 'e':
-            case 'f':
-            case 'g':
-            case 'h':
-            case 'i':
-            case 'j':
-            case 'k':
-            case 'l':
-            case 'm':
-            case 'n':
-            case 'o':
-            case 'p':
-            case 'q':
-            case 'r':
-            case 's':
-            case 't':
-            case 'u':
-            case 'v':
-            case 'w':
-            case 'x':
-            case 'y':
-            case 'z':
-            case 'A':
-            case 'B':
-            case 'C':
-            case 'D':
-            case 'E':
-            case 'F':
-            case 'G':
-            case 'H':
-            case 'I':
-            case 'J':
-            case 'K':
-            case 'L':
-            case 'M':
-            case 'N':
-            case 'O':
-            case 'P':
-            case 'Q':
-            case 'R':
-            case 'S':
-            case 'T':
-            case 'U':
-            case 'V':
-            case 'W':
-            case 'X':
-            case 'Y':
-            case 'Z':{
-
-                        string[str_counter++] = *c;
-                        string[str_counter] = '\0';
-                        t_type = check_token_type(string,str_counter);
-                        if(t_type == NUMBER){
-                            t_temp = NUMBER;
-                        }
-                        else if(t_type != UNKNOWN){
-                            tokens[i++] = create_token(string,str_counter,t_type);
-                            str_counter = 0;
-                        }
-
-                    }
-                    break;
             default:{
-                    //we are currently in the middle of string
-                    if(str_counter > 0 && string[0] == '"'){
-                        string[str_counter++] = *c;
-                        string[str_counter] = '\0';
 
-                    }
+                //TODO: check comman and others cases
+                if(t_temp == NUMBER && check_token_type(c,1) != NUMBER){
+                    tokens[i++] = create_token(string,str_counter,NUMBER);
+                    str_counter = 0;
+                    t_temp = UNKNOWN;
+                }
+                string[str_counter++] = *c;
+                string[str_counter] = '\0';
+                t_type = check_token_type(string,str_counter);
+                if(t_type == NUMBER){
+                    t_temp = NUMBER;
+                }
+                else if(t_type != UNKNOWN){
+                    tokens[i++] = create_token(string,str_counter,t_type);
+                    str_counter = 0;
+                }
             }
         }
     }
