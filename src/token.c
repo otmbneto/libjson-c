@@ -103,7 +103,13 @@ TOKEN* create_token(char* value,int token_length,TOKEN_TYPE type){
     return new_token;
 }
 
-int expand_token(TOKEN*** tokens,int new_length){
+void destroy_token(TOKEN** token){
+    free((*token)->value);
+    free(*token);
+    *token = NULL;
+}
+
+int expand_tokens(TOKEN*** tokens,int new_length){
 
     TOKEN** new_list = NULL;
     int status = 1;
@@ -133,8 +139,7 @@ int expand_string(char** string,int new_length){
     return status;
 }
 
-//TODO: try to use regex instead of ifs
-TOKEN** tokenize(char* filepath){
+TOKEN** tokenize(char* filepath,int* t_count){
 
     int str_def_len = 10;
     char* string = create_string(str_def_len);
@@ -155,7 +160,7 @@ TOKEN** tokenize(char* filepath){
         if(i >= token_count){
             printf("Token list is too big.reallocating memory\n");
             token_count *= 2;
-            expand_token(&tokens,token_count);
+            expand_tokens(&tokens,token_count);
         }
         if(str_counter >= str_def_len){
             printf("string is too big.reallocating memory\n");
@@ -227,13 +232,8 @@ TOKEN** tokenize(char* filepath){
         }
     }
     tokens[i++] = create_token(c,1,END);
-
-    for(int j = 0;j< i; j++){
-
-        printf("token %i: %s\n",j+1,tokens[j]->value);
-
-    }
-
+    *t_count = i;
+    free(string);
 
     return tokens;
 }
