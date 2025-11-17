@@ -9,8 +9,10 @@ int is_number(char* string,int length){
     int is_number = 1;
     int sci_not = 0; //scientific notation started flag
     int has_dot = 0; // flag for when we're into the fractional part of a float.
+    printf("is number %s\n",string);
     while(i < length && is_number){
         switch(string[i]){
+            case 'E':
             case 'e':{
                         if(sci_not){
                             is_number = 0;
@@ -167,11 +169,12 @@ TOKEN** tokenize(char* filepath,int* t_count){
             str_def_len *= 2;
             expand_string(&string,str_def_len);
         }
-        if(str_counter > 0 && string[0] == '"'){
+        if(str_counter > 0 && *c != '.' && string[0] == '"'){
             unique_char = *c;
             *c = ' ';
         }
         TOKEN_TYPE t_type = UNKNOWN;
+        //printf("current char %c\n",*c);
         switch(*c){
 
             case '{':
@@ -197,18 +200,21 @@ TOKEN** tokenize(char* filepath,int* t_count){
             case ',':
                 tokens[i++] = create_token(",", 1, COMMA);
                 break;
+            case '\t':
+            case '\r':
+            case '\n':
             case ' ':{
+                        //if we are not in a string token
                         if(!(str_counter > 0 && string[0] == '"')){
                             break;
                         }
                      }
             default:{
-
                 if(unique_char != ' '){
                     *c = unique_char;
                     unique_char = ' ';
                 }
-                if(t_temp == NUMBER && check_token_type(c,1) != NUMBER){
+                if(t_temp == NUMBER && *c != '.' && *c !='e' && *c !='+' && *c !='-' && check_token_type(c,1) != NUMBER){
                     tokens[number_index] = create_token(string,str_counter,NUMBER);
                     number_index = -1;
                     str_counter = 0;
@@ -228,6 +234,7 @@ TOKEN** tokenize(char* filepath,int* t_count){
                     tokens[i++] = create_token(string,str_counter,t_type);
                     str_counter = 0;
                 }
+
             }
         }
     }
